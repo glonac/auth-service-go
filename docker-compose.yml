@@ -1,0 +1,38 @@
+version: "3.7"
+services:
+  database:
+    image: postgres
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    volumes:
+      - data:/var/lib/postgresql/data
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    depends_on:
+      - database
+    networks:
+      - default
+    ports:
+      - ${PORT}:${PORT}
+#  grafana:
+#    container_name: grafana_container
+#    image: grafana/grafana
+#    ports:
+#      - '3000:3000'
+#
+  jaeger:
+    restart: always
+    image: jaegertracing/all-in-one:1.21
+    ports:
+      - 16686:16686
+      - 14268:14268
+    networks:
+      - default
+volumes:
+  data:
