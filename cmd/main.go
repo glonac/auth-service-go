@@ -3,55 +3,79 @@ package main
 import (
 	auth "auth-service/pkg/auth"
 	"auth-service/pkg/config"
+	"auth-service/pkg/grpc/client"
 	"auth-service/pkg/handler"
 	"auth-service/pkg/logger"
+	mwLogger "auth-service/pkg/middleware/http"
 	"auth-service/pkg/storage"
+	"auth-service/pkg/tracer"
+	"context"
 	"fmt"
-	"net/http"
-	"os"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"go.uber.org/dig"
 	"gorm.io/gorm"
+	"net/http"
 )
 
 func main() {
-  cfg := config.MustLoad()
-  log := logger.SetupLogger("local")
-	connect := storage.Initialize(cfg)
+	cfg := config.MustLoad()
+	log := logger.SetupLogger("local")
+	connect := storage.Initialize(cfg.DataBaseConf)
+
 	migrations(connect)
 
-	containerAuth := BuildContainerAuthModule(connect)
+	router := chi.NewRouter()
+	router.Use(middleware.RequestID)
+	router.Use(mwLogger.New(log))
+	router.Use(middleware.Recoverer)
+	router.Use(middleware.URLFormat)
 
-  log.Info("Success start")
+	containerAuth := BuildContainerAuthModule(connect, cfg)
+
+	log.Info("Success start")
 
 	err := containerAuth.Invoke(func(handler *handler.RestHandler) {
-		handler.HandleRequests()
+		handler.HandleRequests(router)
 	})
 	if err != nil {
-    log.Error("Rest hadler crush : %v", err)
+		log.Error("Rest handle crush : %v", err)
 	}
 
-	port := ":" + os.Getenv("PORT")
-	if os.Getenv("PORT") == "" {
-		port = ":8080"
-	}
-  log.Info("Start on port: %s", port)
+	log.Info("Start on address: %s", cfg.HttpConf.Host+":"+cfg.HttpConf.Port)
 
-	err = http.ListenAndServe(port, nil)
+	srv := &http.Server{
+		Addr:    cfg.HttpConf.Host + ":" + cfg.HttpConf.Port,
+		Handler: router,
+		//ReadTimeout:  1,
+		//WriteTimeout: 1,
+		//IdleTimeout:  1,
+	}
+	err = srv.ListenAndServe()
 	if err != nil {
 		log.Error("failed to listen: %v", err)
 	}
-	//err := tracer.NewTracer("http://jaeger:14268/api/traces", "server")
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//
-	//defer tracer.Tracer.Shutdown(context.Background())
+
+	err = tracer.NewTracer("http://jaeger:14268/api/traces", "server")
+	if err != nil {
+		log.Error("error with tracer", err)
+	}
+
+	defer tracer.Tracer.Shutdown(context.Background())
 }
 
-
-func BuildContainerAuthModule(connectDb *gorm.DB) *dig.Container {
+func BuildContainerAuthModule(connectDb *gorm.DB, cnf *config.MainConfig) *dig.Container {
 	container := dig.New()
 	err := container.Provide(func() *auth.DbRepository {
 		return auth.NewRepository(connectDb)
+	})
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	err = container.Provide(func() *client.UserClientGrpc {
+		return client.NewUserClient(cnf.GrpcConf)
 	})
 
 	if err != nil {

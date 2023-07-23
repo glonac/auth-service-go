@@ -40,8 +40,9 @@ func NewAuth(password, email, code string, codeCreateAt time.Time, isVerified bo
 	}
 }
 
-func (repo *DbRepository) CreateAuth(auth Auth) {
+func (repo *DbRepository) CreateAuth(auth Auth) Auth {
 	repo.connect.Create(&auth)
+	return auth
 }
 
 func (repo *DbRepository) DeleteAuth(id string) {
