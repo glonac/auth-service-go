@@ -23,8 +23,6 @@ func main() {
 	log := logger.SetupLogger("local")
 	connect := storage.Initialize(cfg.DataBaseConf)
 
-	migrations(connect)
-
 	router := chi.NewRouter()
 	router.Use(middleware.RequestID)
 	router.Use(mwLogger.New(log))
@@ -91,11 +89,4 @@ func BuildContainerAuthModule(connectDb *gorm.DB, cnf *config.MainConfig) *dig.C
 	err = container.Provide(handler.NewHandler)
 
 	return container
-}
-
-func migrations(connect *gorm.DB) {
-	err := connect.AutoMigrate(&auth.Auth{})
-	if err != nil {
-		panic(err)
-	}
 }
