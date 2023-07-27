@@ -2,7 +2,7 @@ version: "3.7"
 services:
   database:
     image: postgres
-    container_name: database
+    container_name: auth-service-database
     restart: always
     env_file:
       - .env
@@ -22,12 +22,12 @@ services:
       - default
     ports:
       - ${PORT}:${PORT}
-#  grafana:
-#    container_name: grafana_container
-#    image: grafana/grafana
-#    ports:
-#      - '3000:3000'
-#
+  #  grafana:
+  #    container_name: grafana_container
+  #    image: grafana/grafana
+  #    ports:
+  #      - '3000:3000'
+  #
   jaeger:
     restart: always
     image: jaegertracing/all-in-one:1.21

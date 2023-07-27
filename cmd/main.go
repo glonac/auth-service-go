@@ -10,12 +10,13 @@ import (
 	"auth-service/pkg/storage"
 	"auth-service/pkg/tracer"
 	"context"
-	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/dig"
 	"gorm.io/gorm"
+	"log"
 	"net/http"
+	"time"
 )
 
 func main() {
@@ -43,11 +44,11 @@ func main() {
 	log.Info("Start on address: %s", cfg.HttpConf.Host+":"+cfg.HttpConf.Port)
 
 	srv := &http.Server{
-		Addr:    cfg.HttpConf.Host + ":" + cfg.HttpConf.Port,
-		Handler: router,
-		//ReadTimeout:  1,
-		//WriteTimeout: 1,
-		//IdleTimeout:  1,
+		Addr:         cfg.HttpConf.Host + ":" + cfg.HttpConf.Port,
+		Handler:      router,
+		ReadTimeout:  100 * time.Millisecond,
+		WriteTimeout: 100 * time.Millisecond,
+		IdleTimeout:  100 * time.Millisecond,
 	}
 	err = srv.ListenAndServe()
 	if err != nil {
@@ -64,12 +65,12 @@ func main() {
 
 func BuildContainerAuthModule(connectDb *gorm.DB, cnf *config.MainConfig) *dig.Container {
 	container := dig.New()
-	err := container.Provide(func() *auth.DbRepository {
+	err := container.Provide(func() auth.AuthRepository {
 		return auth.NewRepository(connectDb)
 	})
 
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 
 	err = container.Provide(func() *client.UserClientGrpc {
@@ -77,13 +78,13 @@ func BuildContainerAuthModule(connectDb *gorm.DB, cnf *config.MainConfig) *dig.C
 	})
 
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 
 	err = container.Provide(auth.NewService)
 
 	if err != nil {
-		fmt.Println(err)
+		log.Println(err)
 	}
 
 	err = container.Provide(handler.NewHandler)
