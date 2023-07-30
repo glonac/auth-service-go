@@ -16,7 +16,7 @@ import (
 const separatorCode = "|"
 const lifeCodeHours = 24
 
-type AuthService struct {
+type authService struct {
 	repo           AuthRepository
 	grpcUserClient *client.UserClientGrpc
 }
@@ -36,7 +36,7 @@ var (
 	validationError = errors.New("validate error")
 )
 
-func (s *AuthService) CreateAuth(auth Auth) (createdAuth Auth, err error) {
+func (s *authService) CreateAuth(auth Auth) (createdAuth Auth, err error) {
 	if auth.Email == "" || auth.Password == "" {
 		return Auth{}, validationError
 	}
@@ -59,7 +59,7 @@ func (s *AuthService) CreateAuth(auth Auth) (createdAuth Auth, err error) {
 	return createAuth, nil
 }
 
-func (s *AuthService) FetchAuth(id, email string) Auth {
+func (s *authService) FetchAuth(id, email string) Auth {
 	auth, err := s.repo.FetchAuth(id, email)
 	if err != nil {
 		logger.Err(err)
@@ -67,7 +67,7 @@ func (s *AuthService) FetchAuth(id, email string) Auth {
 	return auth
 }
 
-func (s *AuthService) ResetPassword(id, email string) bool {
+func (s *authService) ResetPassword(id, email string) bool {
 	auth, err := s.repo.FetchAuth(id, email)
 	if err != nil {
 		logger.Err(err)
@@ -79,14 +79,14 @@ func (s *AuthService) ResetPassword(id, email string) bool {
 }
 
 // TODO test this
-func (s *AuthService) generateCode(email string) string {
+func (s *authService) generateCode(email string) string {
 	currentTime := time.Now()
 	//TODO change on solid hash algorithm
 	return base64.StdEncoding.EncodeToString([]byte(email + separatorCode + currentTime.String()))
 }
 
 // TODO test this
-func (s *AuthService) encodeCode(code string) (codeStruct encodeCode, isValid bool) {
+func (s *authService) encodeCode(code string) (codeStruct encodeCode, isValid bool) {
 	codeString, err := base64.StdEncoding.DecodeString(code)
 	if err != nil {
 		logger.Err(err)
@@ -118,5 +118,5 @@ func NewService(
 	repo AuthRepository,
 	grpcUserClient *client.UserClientGrpc,
 ) IAuthService {
-	return &AuthService{repo: repo, grpcUserClient: grpcUserClient}
+	return &authService{repo: repo, grpcUserClient: grpcUserClient}
 }
