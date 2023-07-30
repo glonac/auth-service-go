@@ -8,16 +8,16 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-type UserClientGrpc struct {
-	Client userGrpc.UserServiceClient
+type UserClientGrpc interface {
+	userGrpc.UserServiceClient
 }
 
-func NewUserClient(cnf *config.ConfigGrpc) *UserClientGrpc {
+func NewUserClient(cnf *config.ConfigGrpc) UserClientGrpc {
 	conn, err := grpc.Dial(cnf.Host+":"+cnf.Port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		logger.Err(err)
 	}
 
 	client := userGrpc.NewUserServiceClient(conn)
-	return &UserClientGrpc{Client: client}
+	return client
 }

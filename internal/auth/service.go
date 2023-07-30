@@ -1,9 +1,9 @@
 package auth
 
 import (
-	"auth-service/internal/grpc/client"
 	"auth-service/internal/grpc/userGrpc"
 	"auth-service/internal/logger"
+	"auth-service/internal/user"
 	"context"
 	"encoding/base64"
 	"errors"
@@ -17,8 +17,8 @@ const separatorCode = "|"
 const lifeCodeHours = 24
 
 type authService struct {
-	repo           AuthRepository
-	grpcUserClient *client.UserClientGrpc
+	repo       AuthRepository
+	userClient user.UserClient
 }
 
 type IAuthService interface {
@@ -53,8 +53,8 @@ func (s *authService) CreateAuth(auth Auth) (createdAuth Auth, err error) {
 	//TODO add logic to send email notification with code
 
 	//TODO add logic to check exist user or create new
-	s.grpcUserClient.Client.GetUserById(context.Background(), &userGrpc.GetUserById_Request{
-		UserId: strconv.Itoa(int(createAuth.ID))})
+	s.userClient.GetUserByClientAccountId(context.Background(), &userGrpc.GetUserByClientAccountId_Request{
+		ClientAccountId: strconv.Itoa(int(createAuth.ID))})
 
 	return createAuth, nil
 }
@@ -116,7 +116,7 @@ func (s *authService) encodeCode(code string) (codeStruct encodeCode, isValid bo
 
 func NewService(
 	repo AuthRepository,
-	grpcUserClient *client.UserClientGrpc,
+	grpcUserClient user.UserClient,
 ) IAuthService {
-	return &authService{repo: repo, grpcUserClient: grpcUserClient}
+	return &authService{repo: repo, userClient: grpcUserClient}
 }

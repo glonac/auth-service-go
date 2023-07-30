@@ -1,9 +1,9 @@
 package handler_test
 
 import (
+	"auth-service/internal/auth"
+	"auth-service/internal/handler"
 	"auth-service/mocks"
-	"auth-service/pkg/auth"
-	"auth-service/pkg/handler"
 	"bytes"
 	"encoding/json"
 	"errors"

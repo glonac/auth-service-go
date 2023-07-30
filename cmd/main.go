@@ -9,14 +9,16 @@ import (
 	mwLogger "auth-service/internal/middleware/http"
 	"auth-service/internal/storage"
 	"auth-service/internal/tracer"
+	"auth-service/internal/user"
 	"context"
+	"log"
+	"net/http"
+	"time"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"go.uber.org/dig"
 	"gorm.io/gorm"
-	"log"
-	"net/http"
-	"time"
 )
 
 func main() {
@@ -73,7 +75,7 @@ func BuildContainerAuthModule(connectDb *gorm.DB, cnf *config.MainConfig) *dig.C
 		log.Println(err)
 	}
 
-	err = container.Provide(func() *client.UserClientGrpc {
+	err = container.Provide(func() user.UserClient {
 		return client.NewUserClient(cnf.GrpcConf)
 	})
 
