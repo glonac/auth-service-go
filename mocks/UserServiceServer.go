@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	userGrpc "auth-service/pkg/grpc/userGrpc"
+	userGrpc "auth-service/internal/grpc/userGrpc"
 	context "context"
 
 	mock "github.com/stretchr/testify/mock"

@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	auth "auth-service/pkg/auth"
+	auth "auth-service/internal/auth"
 
 	mock "github.com/stretchr/testify/mock"
 )

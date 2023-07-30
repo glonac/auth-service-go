@@ -1,8 +1,8 @@
 package auth_test
 
 import (
+	auth "auth-service/internal/auth"
 	"auth-service/mocks"
-	auth "auth-service/pkg/auth"
 	"github.com/stretchr/testify/assert"
 	"strconv"
 	"testing"

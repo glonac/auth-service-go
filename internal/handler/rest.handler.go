@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"auth-service/pkg/auth"
-	"auth-service/pkg/logger"
+	"auth-service/internal/auth"
+	"auth-service/internal/logger"
 	"encoding/json"
 	"errors"
 	"github.com/go-chi/chi/v5"

@@ -1,11 +1,11 @@
 package storage
 
 import (
-	"auth-service/pkg/config"
+	"auth-service/internal/config"
 	"fmt"
-	"log"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"log"
 )
 
 var DB *gorm.DB
@@ -21,7 +21,7 @@ func Initialize(cfDb *config.ConfigDatabase) *gorm.DB {
 	}), &gorm.Config{})
 
 	if err != nil {
-    log.Println(err)
+		log.Println(err)
 	}
 	log.Println("Database connected")
 

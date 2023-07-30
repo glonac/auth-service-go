@@ -1,9 +1,9 @@
 package client
 
 import (
-	"auth-service/pkg/config"
-	"auth-service/pkg/grpc/userGrpc"
-	"auth-service/pkg/logger"
+	"auth-service/internal/config"
+	"auth-service/internal/grpc/userGrpc"
+	"auth-service/internal/logger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )

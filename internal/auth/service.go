@@ -1,9 +1,9 @@
 package auth
 
 import (
-	"auth-service/pkg/grpc/client"
-	"auth-service/pkg/grpc/userGrpc"
-	"auth-service/pkg/logger"
+	"auth-service/internal/grpc/client"
+	"auth-service/internal/grpc/userGrpc"
+	"auth-service/internal/logger"
 	"context"
 	"encoding/base64"
 	"errors"

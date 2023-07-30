@@ -1,14 +1,14 @@
 package main
 
 import (
-	auth "auth-service/pkg/auth"
-	"auth-service/pkg/config"
-	"auth-service/pkg/grpc/client"
-	"auth-service/pkg/handler"
-	"auth-service/pkg/logger"
-	mwLogger "auth-service/pkg/middleware/http"
-	"auth-service/pkg/storage"
-	"auth-service/pkg/tracer"
+	auth "auth-service/internal/auth"
+	"auth-service/internal/config"
+	"auth-service/internal/grpc/client"
+	"auth-service/internal/handler"
+	"auth-service/internal/logger"
+	mwLogger "auth-service/internal/middleware/http"
+	"auth-service/internal/storage"
+	"auth-service/internal/tracer"
 	"context"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
