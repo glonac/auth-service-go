@@ -52,7 +52,7 @@ migration-create:
 	goose -dir ./pkg/migrations create $(NAME) sql
 
 migrations:
-	goose -dir ./pkg/migrations postgres "user=${POSTGRES_USER} dbname=${POSTGRES_DB} host=${POSTGRES_HOST} password=${POSTGRES_PASSWORD} port=${POSTGRES_PORT} sslmode=disable" up
+	goose -dir ./internal/migrations postgres "user=${POSTGRES_USER} dbname=${POSTGRES_DB} host=${POSTGRES_HOST} password=${POSTGRES_PASSWORD} port=${POSTGRES_PORT} sslmode=disable" up
 
 migrations-container:
 	docker exec -it auth-service goose -dir ./pkg/migrations postgres "user=${POSTGRES_USER} dbname=${POSTGRES_DB} host=${POSTGRES_HOST} password=${POSTGRES_PASSWORD} port=${POSTGRES_PORT} sslmode=disable" up

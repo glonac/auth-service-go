@@ -1,8 +1,10 @@
 version: "3.7"
 services:
   database:
+    # лучше указывать alpine и конкретную версию
     image: postgres
     container_name: auth-service-database
+    # почти всегда лучше unless-stopped
     restart: always
     env_file:
       - .env

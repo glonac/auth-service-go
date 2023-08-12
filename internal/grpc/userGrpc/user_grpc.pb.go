@@ -4,6 +4,7 @@
 // - protoc             v4.23.4
 // source: protos/user-service/user.proto
 
+// пакеты редко именуют camelCase-ом
 package userGrpc
 
 import (

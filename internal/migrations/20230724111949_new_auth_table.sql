@@ -1,3 +1,7 @@
+-- миграции точно не должны лежать в internal
+-- https://github.com/golang-standards/project-layout
+-- путь в Makefile не актуален
+
 -- +goose Up
 -- +goose StatementBegin
 SELECT 'up SQL query';
@@ -20,3 +24,4 @@ CREATE TABLE auths
 -- +goose StatementBegin
 SELECT 'down SQL query';
 -- +goose StatementEnd
+-- нет скриптов отката

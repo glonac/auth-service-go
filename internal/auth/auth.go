@@ -3,10 +3,11 @@ package auth
 import (
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
 	"log"
 	"strconv"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 var (
@@ -32,8 +33,8 @@ type Auth struct {
 	Password      string    `json:"password"`
 	Email         string    `json:"email"`
 	Code          string    `json:"code"`
-	CodeCreatedAt time.Time `json:"codeCreatedAt"`
-	IsVerified    bool      `json:"is_verified"`
+	CodeCreatedAt time.Time `json:"codeCreatedAt"` // разный кейс в json-тегах для разных полей
+	IsVerified    bool      `json:"is_verified"`   // следует выбрать один
 	CreatedAt     time.Time `json:"createdAt"`
 	UpdateAt      time.Time `json:"updateAt"`
 }
