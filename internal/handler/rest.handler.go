@@ -1,18 +1,26 @@
 package handler
 
+// импорты не сортируются через goimports
+// следует настроить IDE
 import (
 	"auth-service/internal/auth"
 	"auth-service/internal/logger"
 	"encoding/json"
 	"errors"
-	"github.com/go-chi/chi/v5"
 	"log"
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/go-chi/chi/v5"
 )
 
 var (
+	// неканониченое название ошибки
+	// советую ознакомиться с конвенциями вроде:
+	// https://github.com/golang/go/wiki/CodeReviewComments
+	// https://go.dev/doc/effective_go
+	// https://github.com/uber-go/guide/blob/master/style.md
 	ErrorHandle = errors.New("error while handle request")
 )
 
@@ -30,12 +38,18 @@ type createAuthResponse struct {
 
 func (h *RestHandler) createAuth(w http.ResponseWriter, r *http.Request) {
 	var auth auth.Auth
+	// The Server will close the request body. The ServeHTTP
+	// Handler does not need to.
+	// закрывать body нужно только в клиентах для респонсов
 	defer r.Body.Close()
 
 	err := json.NewDecoder(r.Body).Decode(&auth)
 
 	if err != nil {
+		// эта штука же просто вернет атрибут, она ничего не залогирует
+		// получается логирования в хэндлерах вообще нет
 		logger.Err(err)
+		// все же обычно ошибку возвращают в json-объекте
 		w.Write([]byte(ErrorHandle.Error()))
 		return
 	}
@@ -98,10 +112,13 @@ func (h *RestHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(err)
 	}
+
+	// conversion from uint to string yields a string of one rune, not a string of digits (did you mean fmt.Sprint(x)?)
 	isSend := h.s.ResetPassword(string(auth.ID), auth.Email)
 	w.Write([]byte(strconv.FormatBool(isSend)))
 }
 
+// это скорее setup роутера, чем handle
 func (h *RestHandler) HandleRequests(router *chi.Mux) {
 	router.Route("/", func(r chi.Router) {
 		r.Post("/sign-up", h.createAuth)

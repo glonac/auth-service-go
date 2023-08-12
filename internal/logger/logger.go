@@ -1,8 +1,9 @@
 package logger
 
 import (
-	"golang.org/x/exp/slog"
 	"os"
+
+	"golang.org/x/exp/slog"
 )
 
 const (
@@ -17,6 +18,8 @@ func SetupLogger(env string) *slog.Logger {
 
 	switch env {
 	case envLocal:
+		// я бы советовал везде использовать JSON.
+		// Иначе могут вылезти баги, которые вы не заметите при локальной отладке и тестировании.
 		log = slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	case envDev:
 		log = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))

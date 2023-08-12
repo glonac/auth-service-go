@@ -11,6 +11,7 @@ type ConfigDatabase struct {
 }
 
 type ConfigHttp struct {
+	// логично добавить префикс HTTP_
 	Port string `env:"PORT" env-default:"8000"`
 	Host string `env:"HOST" env-default:"localhost"`
 }
@@ -31,6 +32,8 @@ var cnfHTTP ConfigHttp
 var cnfGRPC ConfigGrpc
 
 func MustLoad() *MainConfig {
+	// выглядит избыточно
+	// в cleanenv нельзя сразу передать условынй MainConfig?
 	err := cleanenv.ReadConfig(".env", &cnfDB)
 	if err != nil {
 		panic("Error while get config")
