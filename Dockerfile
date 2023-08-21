@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.19 as builder
+FROM golang:1.19 as build
 
 # Set destination for COPY
 WORKDIR /app
@@ -8,7 +8,7 @@ WORKDIR /app
 # Download Go modules
 COPY go.mod go.sum ./
 
-RUN go install github.com/pressly/goose/v3/cmd/goose@latest
+#RUN go install github.com/pressly/goose/v3/cmd/goose@latest
 RUN go mod download
 RUN go mod tidy
 
@@ -23,4 +23,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /cmd
 #RUN go build -o cmd/main
 
 # Run
+CMD ["/cmd"]
+
+FROM alpine:latest as production
+COPY --from=build cmd/ .
+COPY .env .
 CMD ["/cmd"]

@@ -1,8 +1,8 @@
-package handler_test
+package rest_test
 
 import (
-	"auth-service/internal/auth"
-	"auth-service/internal/handler"
+	"auth-service/internal/handler/rest"
+	"auth-service/internal/repositories"
 	"auth-service/mocks"
 	"bytes"
 	"encoding/json"
@@ -56,12 +56,12 @@ func TestRestHandler_FetchAuth(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			mockAuthRepo := mocks.NewIAuthService(t)
+			mockAuthRepo := mocks.NewAuthService(t)
 			idUuid, _ := strconv.ParseUint(tc.mockResId, 10, 32)
 			mockAuthRepo.On("FetchAuth", tc.id, tc.email).
-				Return(auth.Auth{Email: tc.mockResEmail, ID: uint(idUuid)}, tc.mockError).
+				Return(repositories.Auth{Email: tc.mockResEmail, ID: uint(idUuid)}, tc.mockError).
 				Once()
-			handler := handler.NewHandler(mockAuthRepo)
+			handler := rest.NewHandler(mockAuthRepo)
 
 			input := fmt.Sprintf(`{"id": "%s", "email": "%s"}`, tc.id, tc.email)
 			req, err := http.NewRequest(http.MethodPost, "/fetch-user", bytes.NewReader([]byte(input)))

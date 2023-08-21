@@ -49,13 +49,13 @@ logs:
 
 migration-create:
 #NAME - is name of migrations
-	goose -dir ./pkg/migrations create $(NAME) sql
+	goose -dir ./internal/migrations create $(NAME) sql
 
 migrations:
-	goose -dir ./pkg/migrations postgres "user=${POSTGRES_USER} dbname=${POSTGRES_DB} host=${POSTGRES_HOST} password=${POSTGRES_PASSWORD} port=${POSTGRES_PORT} sslmode=disable" up
+	goose -dir ./internal/migrations postgres "user=${POSTGRES_USER} dbname=${POSTGRES_DB} host=${POSTGRES_HOST} password=${POSTGRES_PASSWORD} port=${POSTGRES_PORT} sslmode=disable" up
 
 migrations-container:
-	docker exec -it auth-service goose -dir ./pkg/migrations postgres "user=${POSTGRES_USER} dbname=${POSTGRES_DB} host=${POSTGRES_HOST} password=${POSTGRES_PASSWORD} port=${POSTGRES_PORT} sslmode=disable" up
+	docker exec -it auth-service goose -dir ./internal/migrations postgres "user=${POSTGRES_USER} dbname=${POSTGRES_DB} host=${POSTGRES_HOST} password=${POSTGRES_PASSWORD} port=${POSTGRES_PORT} sslmode=disable" up
 
 help:
 	@echo "\033[1;32mdocker-env\t\t- Main scenario, used by default\033[0m"

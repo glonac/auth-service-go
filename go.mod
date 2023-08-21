@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/ilyakaznacheev/cleanenv v1.4.2
+	github.com/rabbitmq/amqp091-go v1.8.1
 	github.com/stretchr/testify v1.8.3
 	go.opentelemetry.io/otel v1.16.0
 	go.opentelemetry.io/otel/exporters/jaeger v1.16.0

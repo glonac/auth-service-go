@@ -1,40 +1,46 @@
 version: "3.7"
 services:
-  database:
+  auth-database:
     image: postgres
     container_name: auth-service-database
     restart: always
-    env_file:
-      - .env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER_AUTH}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD_AUTH}
+      POSTGRES_DB: ${POSTGRES_DB_AUTH}
+      POSTGRES_HOST_AUTH_METHOD: ${POSTGRES_HOST_AUTH_METHOD}
     ports:
-      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+      - ${POSTGRES_PORT_AUTH}:${POSTGRES_PORT_AUTH}
     volumes:
-      - data:/var/lib/postgresql/data
-  server:
+      - auth-service:/var/lib/postgresql/data
+  auth-service:
     container_name: auth-service
     build:
       context: .
       dockerfile: Dockerfile
     env_file: .env
+    restart: always
     depends_on:
-      - database
+      - auth-database
     networks:
       - default
     ports:
-      - ${PORT}:${PORT}
-  #  grafana:
+      - ${PORT_AUTH_SERVICE}:${PORT_AUTH_SERVICE}
+    expose:
+      - ${PORT_AUTH_SERVICE}
+        #  grafana:
   #    container_name: grafana_container
   #    image: grafana/grafana
   #    ports:
   #      - '3000:3000'
   #
-  jaeger:
-    restart: always
-    image: jaegertracing/all-in-one:1.21
-    ports:
-      - 16686:16686
-      - 14268:14268
-    networks:
-      - default
+#  jaeger:
+#    restart: always
+#    image: jaegertracing/all-in-one:1.21
+#    ports:
+#      - 16686:16686
+#      - 14268:14268
+#    networks:
+#      - default
 volumes:
-  data:
+  auth-service:
