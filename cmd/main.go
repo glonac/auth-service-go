@@ -11,6 +11,7 @@ import (
 	"auth-service/internal/queue"
 	"auth-service/internal/repositories"
 	"auth-service/internal/storage"
+	"auth-service/internal/tracer"
 	"context"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
