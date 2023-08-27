@@ -30,6 +30,7 @@ func NewClientQueue(cnf *config.ConfigQueue) QueueService {
 	ch, err := conn.Channel()
 
 	if err != nil {
+		//add logger
 		fmt.Println(err)
 	}
 
@@ -41,6 +42,9 @@ func NewClientQueue(cnf *config.ConfigQueue) QueueService {
 		false,   // no-wait
 		nil,     // arguments
 	)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	mapQueue := map[string]amqp.Queue{"event": q}
 	return &queueService{ch, mapQueue, conn}

@@ -24,19 +24,6 @@ type authService struct {
 	queueClient    queue.QueueService
 }
 
-type AuthService interface {
-	CreateAuth(ctx context.Context, auth AuthRepoStruct) (createdAuth AuthRepoStruct, err error)
-	FetchAuth(ctx context.Context, id, email string) (AuthRepoStruct, error)
-	ResetPassword(ctx context.Context, id, email string) bool
-}
-
-type AuthRepository interface {
-	CreateAuth(ctx context.Context, auth AuthRepoStruct) (createAuth AuthRepoStruct, err error)
-	DeleteAuth(ctx context.Context, id string)
-	FetchAuth(ctx context.Context, id, email string) (auth AuthRepoStruct, err error)
-	UpdateAuth(ctx context.Context, id string, auth AuthRepoStruct) (AuthRepoStruct, error)
-}
-
 type AuthRepoStruct struct {
 	gorm.Model
 	ID            uint      `json:"id" gorm:"primary_key"`
@@ -83,9 +70,17 @@ func (s *authService) CreateAuth(ctx context.Context, auth AuthRepoStruct) (crea
 	//TODO add logic to send email notification with code
 
 	//TODO add logic to check exist user or create new
-	s.grpcUserClient.Client.GetUserById(context.Background(), &userGrpc.GetUserById_Request{
+	_, err = s.grpcUserClient.Client.GetUserById(context.Background(), &userGrpc.GetUserById_Request{
 		UserId: strconv.Itoa(int(createAuth.ID))})
-	s.queueClient.SendMsg("test")
+	if err != nil {
+		s.log.Error("authService: %s", err)
+		return AuthRepoStruct{}, err
+	}
+	err = s.queueClient.SendMsg("test")
+	if err != nil {
+		s.log.Error("authService: %s", err)
+		return AuthRepoStruct{}, err
+	}
 	return createAuth, nil
 }
 

@@ -1,18 +1,19 @@
 package rest_test
 
 import (
+	"auth-service/internal/auth"
 	"auth-service/internal/handler/rest"
-	"auth-service/internal/repositories"
 	"auth-service/mocks"
 	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestRestHandler_FetchAuth(t *testing.T) {
@@ -59,7 +60,7 @@ func TestRestHandler_FetchAuth(t *testing.T) {
 			mockAuthRepo := mocks.NewAuthService(t)
 			idUuid, _ := strconv.ParseUint(tc.mockResId, 10, 32)
 			mockAuthRepo.On("FetchAuth", tc.id, tc.email).
-				Return(repositories.Auth{Email: tc.mockResEmail, ID: uint(idUuid)}, tc.mockError).
+				Return(auth.AuthRepoStruct{Email: tc.mockResEmail, ID: uint(idUuid)}, tc.mockError).
 				Once()
 			handler := rest.NewHandler(mockAuthRepo)
 
