@@ -1,24 +1,24 @@
 package main
 
 import (
-	"auth-service/internal/auth"
 	"auth-service/internal/closer"
 	"auth-service/internal/config"
+	"auth-service/internal/domain"
 	"auth-service/internal/grpc/client"
 	"auth-service/internal/handler/rest"
+	routerCustom "auth-service/internal/handler/rest/router"
 	"auth-service/internal/logger"
 	mwLogger "auth-service/internal/middleware/http"
-	"auth-service/internal/queue"
 	"auth-service/internal/repositories"
 	"auth-service/internal/storage"
 	"auth-service/internal/tracer"
 	"context"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"go.uber.org/dig"
+	tracesdk "go.opentelemetry.io/otel/sdk/trace"
 	"golang.org/x/exp/slog"
-	"gorm.io/gorm"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -27,11 +27,22 @@ import (
 const shutdownTimeout = 5 * time.Second
 
 func main() {
+	log := logger.SetupLogger("local")
+	if err := run(log); err != nil {
+		log.Error("Fatal:", err)
+	}
+	os.Exit(0)
+}
+
+func run(log *slog.Logger) error {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+
 	cfg := config.MustLoad()
-	log := logger.SetupLogger("local")
-	connect := storage.Initialize(cfg.DataBaseConf)
+	connect, err := storage.NewPG(context.Background(), cfg.DataBaseConf)
+	if err != nil {
+		log.Error(err.Error())
+	}
 	c := closer.GetInstance()
 
 	router := chi.NewRouter()
@@ -40,19 +51,11 @@ func main() {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.URLFormat)
 
-	containerAuth := BuildContainerAuthModule(connect, log, cfg)
+	routerRest := buildRestTransport(connect, log, cfg)
 
 	log.Info("Success start")
 
-	err := containerAuth.Invoke(func(handler *rest.Handler) {
-		handler.HandleRequests(router)
-	})
-
-	if err != nil {
-		log.Error("Rest handle crush : %v", err)
-	}
-
-	log.Info("Start on address: %s\n", cfg.HttpConf.Host+":"+cfg.HttpConf.Port)
+	routerRest.HandleRequests(router)
 
 	srv := &http.Server{
 		Addr:         cfg.HttpConf.Host + ":" + cfg.HttpConf.Port,
@@ -69,23 +72,20 @@ func main() {
 
 	c.Add(srv.Shutdown)
 
-	err = containerAuth.Invoke(func(handler *rest.Handler) {
-		handler.HandleRequests(router)
-	})
-
-	if err != nil {
-		log.Error("error request handle", err)
-	}
 	err = tracer.NewTracer("http://jaeger:14268/api/traces", "server")
 
 	if err != nil {
 		log.Error("error with tracer", err)
+		return err
 	}
 
-	defer tracer.Tracer.Shutdown(context.Background())
-	if err != nil {
-		log.Error("failed to listen: %v", err)
-	}
+	defer func(Tracer *tracesdk.TracerProvider, ctx context.Context) {
+		err := Tracer.Shutdown(ctx)
+		if err != nil {
+			log.Error("main : ", err.Error())
+		}
+	}(tracer.Tracer, context.Background())
+
 	<-ctx.Done()
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
@@ -93,53 +93,16 @@ func main() {
 	err = c.Close(shutdownCtx)
 	if err != nil {
 		log.Error("error while shutdown", err)
+		return err
 	}
+	return nil
 }
 
-func BuildContainerAuthModule(connectDb *gorm.DB, logger *slog.Logger, cnf *config.MainConfig) *dig.Container {
-	container := dig.New()
-	err := container.Provide(func() auth.AuthRepository {
-		return repositories.NewRepository(connectDb, logger)
-	})
-
-	if err != nil {
-		logger.Error("error while build", err)
-	}
-
-	err = container.Provide(func() *client.UserClientGrpc {
-		return client.NewUserClient(cnf.GrpcConf)
-	})
-
-	if err != nil {
-		logger.Error("error while build", err)
-	}
-
-	err = container.Provide(auth.NewService)
-
-	if err != nil {
-		logger.Error("error while build", err)
-	}
-
-	err = container.Provide(func() queue.QueueService {
-		return queue.NewClientQueue(cnf.QueueConf)
-	})
-
-	if err != nil {
-		logger.Error("error while build", err)
-	}
-	err = container.Provide(rest.NewHandler)
-
-	if err != nil {
-		logger.Error("error while build", err)
-	}
-
-	err = container.Provide(func() *slog.Logger {
-		return logger
-	})
-
-	if err != nil {
-		logger.Error("error while build", err)
-	}
-
-	return container
+func buildRestTransport(connectDb *storage.Postgres, logger *slog.Logger, cnf *config.MainConfig) routerCustom.Router {
+	authRepo := repositories.NewRepository(connectDb, logger)
+	userClient := client.NewUserClient(cnf.GrpcConf)
+	authService := domain.NewService(authRepo, userClient, logger)
+	restHandler := rest.NewHandler(authService, logger)
+	router := routerCustom.NewRouter(restHandler)
+	return router
 }
