@@ -2,7 +2,7 @@ version: "3.7"
 services:
   auth-database:
     image: postgres
-    container_name: auth-service-database
+    container_name: domain-service-database
     restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER_AUTH}
@@ -12,9 +12,9 @@ services:
     ports:
       - ${POSTGRES_PORT_AUTH}:${POSTGRES_PORT_AUTH}
     volumes:
-      - auth-service:/var/lib/postgresql/data
+      - domain-service:/var/lib/postgresql/data
   auth-service:
-    container_name: auth-service
+    container_name: domain-service
     build:
       context: .
       dockerfile: Dockerfile

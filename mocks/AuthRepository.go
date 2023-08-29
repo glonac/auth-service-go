@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	auth "auth-service/internal/auth"
+	auth "auth-service/internal/domain"
 	context "context"
 
 	mock "github.com/stretchr/testify/mock"
@@ -15,21 +15,21 @@ type AuthRepository struct {
 }
 
 // CreateAuth provides a mock function with given fields: ctx, _a1
-func (_m *AuthRepository) CreateAuth(ctx context.Context, _a1 auth.AuthRepoStruct) (auth.AuthRepoStruct, error) {
+func (_m *AuthRepository) CreateAuth(ctx context.Context, _a1 auth.AuthRepo) (auth.AuthRepo, error) {
 	ret := _m.Called(ctx, _a1)
 
-	var r0 auth.AuthRepoStruct
+	var r0 auth.AuthRepo
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, auth.AuthRepoStruct) (auth.AuthRepoStruct, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, auth.AuthRepo) (auth.AuthRepo, error)); ok {
 		return rf(ctx, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, auth.AuthRepoStruct) auth.AuthRepoStruct); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, auth.AuthRepo) auth.AuthRepo); ok {
 		r0 = rf(ctx, _a1)
 	} else {
-		r0 = ret.Get(0).(auth.AuthRepoStruct)
+		r0 = ret.Get(0).(auth.AuthRepo)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, auth.AuthRepoStruct) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, auth.AuthRepo) error); ok {
 		r1 = rf(ctx, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -44,18 +44,18 @@ func (_m *AuthRepository) DeleteAuth(ctx context.Context, id string) {
 }
 
 // FetchAuth provides a mock function with given fields: ctx, id, email
-func (_m *AuthRepository) FetchAuth(ctx context.Context, id string, email string) (auth.AuthRepoStruct, error) {
+func (_m *AuthRepository) FetchAuth(ctx context.Context, id string, email string) (auth.AuthRepo, error) {
 	ret := _m.Called(ctx, id, email)
 
-	var r0 auth.AuthRepoStruct
+	var r0 auth.AuthRepo
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) (auth.AuthRepoStruct, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (auth.AuthRepo, error)); ok {
 		return rf(ctx, id, email)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) auth.AuthRepoStruct); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) auth.AuthRepo); ok {
 		r0 = rf(ctx, id, email)
 	} else {
-		r0 = ret.Get(0).(auth.AuthRepoStruct)
+		r0 = ret.Get(0).(auth.AuthRepo)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
@@ -68,21 +68,21 @@ func (_m *AuthRepository) FetchAuth(ctx context.Context, id string, email string
 }
 
 // UpdateAuth provides a mock function with given fields: ctx, id, _a2
-func (_m *AuthRepository) UpdateAuth(ctx context.Context, id string, _a2 auth.AuthRepoStruct) (auth.AuthRepoStruct, error) {
+func (_m *AuthRepository) UpdateAuth(ctx context.Context, id string, _a2 auth.AuthRepo) (auth.AuthRepo, error) {
 	ret := _m.Called(ctx, id, _a2)
 
-	var r0 auth.AuthRepoStruct
+	var r0 auth.AuthRepo
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, auth.AuthRepoStruct) (auth.AuthRepoStruct, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, auth.AuthRepo) (auth.AuthRepo, error)); ok {
 		return rf(ctx, id, _a2)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, auth.AuthRepoStruct) auth.AuthRepoStruct); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, auth.AuthRepo) auth.AuthRepo); ok {
 		r0 = rf(ctx, id, _a2)
 	} else {
-		r0 = ret.Get(0).(auth.AuthRepoStruct)
+		r0 = ret.Get(0).(auth.AuthRepo)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, auth.AuthRepoStruct) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, string, auth.AuthRepo) error); ok {
 		r1 = rf(ctx, id, _a2)
 	} else {
 		r1 = ret.Error(1)

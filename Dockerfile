@@ -19,7 +19,7 @@ COPY . .
 COPY cmd/*.go ./
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux go build -o /cmd
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /cmd
 #RUN go build -o cmd/main
 
 # Run
@@ -28,4 +28,14 @@ CMD ["/cmd"]
 FROM alpine:latest as production
 COPY --from=build cmd/ .
 COPY .env .
+RUN apk update && apk upgrade
+
+# Reduce image size
+RUN rm -rf /var/cache/apk/* && \
+    rm -rf /tmp/*
+
+# Avoid running code as a root user
+RUN adduser -D appuser
+USER appuser
+
 CMD ["/cmd"]

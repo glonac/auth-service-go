@@ -1,7 +1,7 @@
 package repositories_test
 
 import (
-	authDomain "auth-service/internal/auth"
+	authDomain "auth-service/internal/domain"
 	"auth-service/mocks"
 	"context"
 	"fmt"
@@ -45,9 +45,9 @@ func TestDbRepository_CreateAuth(t *testing.T) {
 			mockAuthRepo := mocks.NewAuthRepository(t)
 			ctx := context.Background()
 			if tc.mockError != nil {
-				testStruct := authDomain.AuthRepoStruct{Password: tc.password, Email: tc.email}
+				testStruct := authDomain.AuthRepo{Password: tc.password, Email: tc.email}
 				mockAuthRepo.On("CreateAuth", testStruct).
-					Return(authDomain.AuthRepoStruct{Email: tc.email, Password: tc.password}, tc.mockError).
+					Return(authDomain.AuthRepo{Email: tc.email, Password: tc.password}, tc.mockError).
 					Once()
 				res, err := mockAuthRepo.CreateAuth(ctx, testStruct)
 				fmt.Println(res)
@@ -105,14 +105,14 @@ func TestDbRepository_FetchAuth(t *testing.T) {
 			ctx := context.Background()
 			if tc.mockError != nil {
 				mockAuthRepo.On("FetchAuth", tc.id, tc.email).
-					Return(authDomain.AuthRepoStruct{Email: tc.mockResEmail, ID: uint(idUuid)}, tc.mockError).
+					Return(authDomain.AuthRepo{Email: tc.mockResEmail, ID: uint(idUuid)}, tc.mockError).
 					Once()
 				res, err := mockAuthRepo.FetchAuth(ctx, tc.id, tc.email)
 				if err != nil {
 					assert.EqualError(t, tc.mockError, err.Error())
 				}
 				assert.Equal(t,
-					authDomain.AuthRepoStruct{
+					authDomain.AuthRepo{
 						Email: tc.mockResEmail,
 						ID:    uint(idUuid)}, res)
 			}
