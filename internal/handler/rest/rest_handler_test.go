@@ -1,7 +1,7 @@
 package rest_test
 
 import (
-	"auth-service/internal/auth"
+	"auth-service/internal/domain"
 	"auth-service/internal/handler/rest"
 	"auth-service/mocks"
 	"bytes"
@@ -38,7 +38,7 @@ func TestRestHandler_FetchAuth(t *testing.T) {
 			id:           "",
 			mockResId:    "0",
 			mockResEmail: "notExist@email.ru",
-			mockError:    errors.New("No auth on this id"),
+			mockError:    errors.New("No domain on this id"),
 		},
 		{
 			name:         "Search by id",
@@ -52,7 +52,7 @@ func TestRestHandler_FetchAuth(t *testing.T) {
 			id:           "",
 			mockResId:    "0",
 			mockResEmail: "",
-			mockError:    errors.New("No auth on this id"),
+			mockError:    errors.New("No domain on this id"),
 		},
 	}
 	for _, tc := range cases {
@@ -60,7 +60,7 @@ func TestRestHandler_FetchAuth(t *testing.T) {
 			mockAuthRepo := mocks.NewAuthService(t)
 			idUuid, _ := strconv.ParseUint(tc.mockResId, 10, 32)
 			mockAuthRepo.On("FetchAuth", tc.id, tc.email).
-				Return(auth.AuthRepoStruct{Email: tc.mockResEmail, ID: uint(idUuid)}, tc.mockError).
+				Return(domain.AuthRepo{Email: tc.mockResEmail, ID: uint(idUuid)}, tc.mockError).
 				Once()
 			handler := rest.NewHandler(mockAuthRepo)
 

@@ -15,12 +15,12 @@ type queueService struct {
 	conn  *amqp.Connection
 }
 
-type QueueService interface {
+type Queue interface {
 	SendMsg(msg string) error
-	Close()
+	Close() error
 }
 
-func NewClientQueue(cnf *config.ConfigQueue) QueueService {
+func NewClientQueue(cnf *config.ConfigQueue) Queue {
 	amqpServerURL := fmt.Sprintf("amqp://%s:%s@%s:%s/", cnf.User, cnf.Password, cnf.Host, cnf.Port)
 	conn, err := amqp.Dial(amqpServerURL) // Создаем подключение к RabbitMQ
 	if err != nil {
@@ -68,6 +68,10 @@ func (s *queueService) SendMsg(msg string) error {
 	return nil
 }
 
-func (s *queueService) Close() {
-	s.conn.Close()
+func (s *queueService) Close() error {
+	err := s.conn.Close()
+	if err != nil {
+		return err
+	}
+	return nil
 }

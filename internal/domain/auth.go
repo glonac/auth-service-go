@@ -1,15 +1,11 @@
-package auth
+package domain
 
 import (
 	"auth-service/internal/grpc/client"
-	"auth-service/internal/queue"
-	"auth-service/pkg/grpc/userGrpc"
 	"context"
 	"encoding/base64"
-	"errors"
+	"fmt"
 	"golang.org/x/exp/slog"
-	"gorm.io/gorm"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -19,25 +15,40 @@ const lifeCodeHours = 24
 
 type authService struct {
 	log            *slog.Logger
-	repo           AuthRepository
+	repo           Repository
 	grpcUserClient *client.UserClientGrpc
-	queueClient    queue.QueueService
+	//queueClient    queue.QueueService
 }
 
-type AuthRepoStruct struct {
-	gorm.Model
-	ID            uint      `json:"id" gorm:"primary_key"`
-	Password      string    `json:"password"`
-	Email         string    `json:"email"`
-	Code          string    `json:"code"`
-	CodeCreatedAt time.Time `json:"codeCreatedAt"`
-	IsVerified    bool      `json:"is_verified"`
-	CreatedAt     time.Time `json:"createdAt"`
-	UpdateAt      time.Time `json:"updateAt"`
+type AuthRepo struct {
+	ID            int
+	Password      string
+	Email         string
+	Code          string
+	CodeCreatedAt time.Time
+	IsVerified    bool
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
-func (AuthRepoStruct) TableName() string {
-	return "auth"
+type AuthFetch struct {
+	ID            int
+	Email         string
+	Code          string
+	CodeCreatedAt time.Time
+	IsVerified    bool
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
+}
+
+type AuthUpdate struct {
+	ID            string
+	Email         string
+	Code          string
+	CodeCreatedAt time.Time
+	IsVerified    bool
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
 type encodeCode struct {
@@ -45,49 +56,52 @@ type encodeCode struct {
 	createTime string
 }
 
-var (
-	ValidationError  = errors.New("validate error")
-	ErrorNoAuth      = errors.New("no such user")
-	ErrorWhileFetch  = errors.New("error while fetch")
-	ErrorWhileCreate = errors.New("error while create")
-)
-
-func (s *authService) CreateAuth(ctx context.Context, auth AuthRepoStruct) (createdAuth AuthRepoStruct, err error) {
+func (s *authService) CreateAuth(ctx context.Context, auth AuthRepo) (createdAuth AuthFetch, err error) {
 	if auth.Email == "" || auth.Password == "" {
-		return AuthRepoStruct{}, ValidationError
+		return AuthFetch{}, ValidationError
 	}
 
 	code := s.generateCode(auth.Email)
 	auth.Code = code
 
 	createAuth, err := s.repo.CreateAuth(ctx, auth)
-
+	fmt.Println(createAuth)
 	if err != nil {
 		s.log.Error("authService: " + err.Error())
-		return AuthRepoStruct{}, err
+		return AuthFetch{}, err
 	}
 
 	//TODO add logic to send email notification with code
 
 	//TODO add logic to check exist user or create new
-	_, err = s.grpcUserClient.Client.GetUserById(context.Background(), &userGrpc.GetUserById_Request{
-		UserId: strconv.Itoa(int(createAuth.ID))})
-	if err != nil {
-		s.log.Error("authService: %s", err)
-		return AuthRepoStruct{}, err
-	}
-	err = s.queueClient.SendMsg("test")
-	if err != nil {
-		s.log.Error("authService: %s", err)
-		return AuthRepoStruct{}, err
-	}
+	//_, err = s.grpcUserClient.Client.GetUserById(context.Background(), &userGrpc.GetUserById_Request{
+	//	UserId: strconv.Itoa(int(createAuth.ID))})
+	//
+	//if err != nil {
+	//	s.log.Error("authService: %s", err)
+	//	return AuthRepo{}, err
+	//}
+	//err = s.queueClient.SendMsg("test")
+	//if err != nil {
+	//	s.log.Error("authService: %s", err)
+	//	return AuthRepo{}, err
+	//}
 	return createAuth, nil
 }
 
-func (s *authService) FetchAuth(ctx context.Context, id, email string) (AuthRepoStruct, error) {
+func (s *authService) UpdateAuth(ctx context.Context, auth AuthUpdate) (AuthUpdate, error) {
+	auth, err := s.repo.UpdateAuth(ctx, auth.ID, auth)
+	if err != nil {
+		s.log.Error("auth service:", err.Error())
+		return auth, err
+	}
+	return auth, nil
+}
+
+func (s *authService) FetchAuth(ctx context.Context, id, email string) (AuthFetch, error) {
 	auth, err := s.repo.FetchAuth(ctx, id, email)
 	if err != nil {
-		s.log.Error(err.Error())
+		s.log.Error("auth service:", err.Error())
 		return auth, err
 	}
 	return auth, nil
@@ -138,11 +152,17 @@ func (s *authService) encodeCode(code string) (codeStruct encodeCode, isValid bo
 	}, true
 }
 
+func (s *authService) DeleteAuth(ctx context.Context, id string) bool {
+	isOk := s.repo.DeleteAuth(ctx, id)
+	return isOk
+}
+
 func NewService(
-	repo AuthRepository,
+	repo Repository,
 	grpcUserClient *client.UserClientGrpc,
 	logger *slog.Logger,
-	queue queue.QueueService,
-) AuthService {
-	return &authService{repo: repo, grpcUserClient: grpcUserClient, log: logger, queueClient: queue}
+	// queue queue.QueueService,
+) Service {
+	return &authService{repo: repo, grpcUserClient: grpcUserClient, log: logger} //queueClient: queue
+
 }

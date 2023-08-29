@@ -1,53 +1,59 @@
 package rest
 
 import (
-	"auth-service/internal/auth"
-	"auth-service/internal/logger"
+	"auth-service/internal/domain"
+	"auth-service/internal/server"
 	"encoding/json"
-	"errors"
-	"github.com/go-chi/chi/v5"
 	"golang.org/x/exp/slog"
+	"io"
 	"net/http"
 	"strconv"
 	"time"
 )
 
-var (
-	ErrorHandle = errors.New("error while handle request")
-)
-
-type Handler struct {
-	s      auth.AuthService
+type handler struct {
+	s      domain.Service
 	logger *slog.Logger
 }
 
+type Handler interface {
+	CreateAuth(w http.ResponseWriter, r *http.Request)
+	FetchAuth(w http.ResponseWriter, r *http.Request)
+	ResetPassword(w http.ResponseWriter, r *http.Request)
+	DeleteAuth(w http.ResponseWriter, r *http.Request)
+	UpdateAuth(w http.ResponseWriter, r *http.Request)
+}
+
 type createAuthResponse struct {
-	ID            uint      `json:"id"`
+	ID            int       `json:"id"`
 	Email         string    `json:"email"`
 	Code          string    `json:"code"`
 	CodeCreatedAt time.Time `json:"codeCreatedAt"`
 	IsVerified    bool      `json:"is_verified"`
 }
 
-func (h *Handler) createAuth(w http.ResponseWriter, r *http.Request) {
+func (h *handler) CreateAuth(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	var authRequest auth.AuthRepoStruct
-	defer r.Body.Close()
+	var authRequest domain.AuthRepo
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			h.logger.Error("error while close:", err)
+		}
+	}(r.Body)
 
 	err := json.NewDecoder(r.Body).Decode(&authRequest)
 
 	if err != nil {
 		h.logger.Error(err.Error())
-		w.WriteHeader(400)
-		_, _ = w.Write([]byte(ErrorHandle.Error()))
+		server.RespondWithError([]byte("error"), w, 400)
 		return
 	}
 	createdAuth, err := h.s.CreateAuth(ctx, authRequest)
 
 	if err != nil {
 		h.logger.Error(err.Error())
-		w.WriteHeader(500)
-		_, _ = w.Write([]byte(err.Error()))
+		server.RespondWithError([]byte("server error"), w, 500)
 		return
 	}
 
@@ -60,66 +66,137 @@ func (h *Handler) createAuth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jsonData, err := json.Marshal(response)
+
 	if err != nil {
-		w.WriteHeader(500)
-		_, _ = w.Write([]byte(ErrorHandle.Error()))
+		h.logger.Error(err.Error())
+		server.RespondWithError([]byte("server error"), w, 500)
 		return
 	}
-	w.WriteHeader(200)
-	_, _ = w.Write(jsonData)
+
+	server.RespondOK(jsonData, w)
 }
 
-func (h *Handler) FetchAuth(w http.ResponseWriter, r *http.Request) {
+func (h *handler) UpdateAuth(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	defer r.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			h.logger.Error("error while close:", err)
+		}
+	}(r.Body)
+
 	data := struct {
 		Email string `json:"email"`
 		Id    string `json:"id"`
 	}{}
+
 	err := json.NewDecoder(r.Body).Decode(&data)
 
 	if err != nil {
-		h.logger.Error(err.Error())
+		h.logger.Error("rest error while request decode: ", err.Error())
+		server.RespondWithError([]byte("server error"), w, 500)
+		return
 	}
-	fetchAuth, err := h.s.FetchAuth(ctx, data.Id, data.Email)
+
+	updateAuth, err := h.s.UpdateAuth(ctx, domain.AuthUpdate{Email: data.Email, ID: data.Id})
+
 	if err != nil {
-		w.WriteHeader(400)
-		_, _ = w.Write([]byte("No auth on this id"))
+		server.RespondWithError([]byte("No domain on this id"), w, 400)
+		return
+	}
+
+	jsonData, err := json.Marshal(updateAuth)
+	if err != nil {
+		h.logger.Error(err.Error())
+		server.RespondWithError([]byte("server error"), w, 500)
+		return
+	}
+	server.RespondOK(jsonData, w)
+}
+
+func (h *handler) FetchAuth(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			h.logger.Error("error while close:", err)
+		}
+	}(r.Body)
+
+	data := struct {
+		Email string `json:"email"`
+		Id    string `json:"id"`
+	}{}
+
+	err := json.NewDecoder(r.Body).Decode(&data)
+
+	if err != nil {
+		h.logger.Error("rest error whilte request decode: ", err.Error())
+		server.RespondWithError([]byte("server error"), w, 500)
+		return
+	}
+
+	fetchAuth, err := h.s.FetchAuth(ctx, data.Id, data.Email)
+
+	if err != nil {
+		server.RespondWithError([]byte("No domain on this id"), w, 400)
 		return
 	}
 
 	jsonData, err := json.Marshal(fetchAuth)
 	if err != nil {
-		logger.Err(err)
-		w.WriteHeader(500)
-		_, _ = w.Write([]byte("error"))
+		h.logger.Error(err.Error())
+		server.RespondWithError([]byte("server error"), w, 500)
+		return
 	}
-	w.WriteHeader(200)
-	_, _ = w.Write(jsonData)
+	server.RespondOK(jsonData, w)
 }
 
-func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+func (h *handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	var authRequest auth.AuthRepoStruct
-	defer r.Body.Close()
+	var authRequest domain.AuthRepo
+
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			h.logger.Error("error while close:", err)
+		}
+	}(r.Body)
 
 	err := json.NewDecoder(r.Body).Decode(&authRequest)
 
 	if err != nil {
 		h.logger.Error(err.Error())
+		server.RespondWithError([]byte("error"), w, 500)
+		return
 	}
-	isSend := h.s.ResetPassword(ctx, string(authRequest.ID), authRequest.Email)
-	w.WriteHeader(200)
-	_, _ = w.Write([]byte(strconv.FormatBool(isSend)))
+	isSend := h.s.ResetPassword(ctx, strconv.Itoa(authRequest.ID), authRequest.Email)
+
+	server.RespondOK([]byte(strconv.FormatBool(isSend)), w)
 }
 
-func (h *Handler) HandleRequests(r *chi.Mux) {
-	r.Post("/sign-up", h.createAuth)
-	r.Post("/fetch-user", h.FetchAuth)
-	r.Post("/resetPass", h.ResetPassword)
-	//TODO verify-email
+func (h *handler) DeleteAuth(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			h.logger.Error("error while close:", err)
+		}
+	}(r.Body)
+
+	id := r.URL.Query().Get("id")
+
+	if id == "" {
+		h.logger.Error("auth handler: empty id")
+		server.RespondWithError([]byte("id empty"), w, 400)
+		return
+	}
+	isOk := h.s.DeleteAuth(ctx, id)
+
+	server.RespondOK([]byte(strconv.FormatBool(isOk)), w)
 }
 
-func NewHandler(s auth.AuthService, logger *slog.Logger) *Handler {
-	return &Handler{s: s, logger: logger}
+func NewHandler(s domain.Service, logger *slog.Logger) Handler {
+	return &handler{s: s, logger: logger}
 }
